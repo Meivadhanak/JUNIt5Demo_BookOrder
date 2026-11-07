@@ -35,14 +35,7 @@ public class BookOrderManager {
             throw new IllegalArgumentException("Quantity must be greater than zero.");
         }
 
-        Book foundBook = null;
-        for (Book b : inventory) {
-            if (b.getTitle().equals(bookTitle)) {
-                foundBook = b;
-                break;
-            }
-        }
-
+        Book foundBook = findBook(bookTitle);
         if (foundBook == null) {
             throw new IllegalStateException("Book not found in inventory.");
         }
@@ -58,19 +51,23 @@ public class BookOrderManager {
         return total;
     }
 
+    private Book findBook(String bookTitle) {
+        for (Book b : inventory) {
+            if (b.getTitle().equals(bookTitle)) {
+                return b;
+            }
+        }
+        return null;
+    }
+
     // Processes checkout and updates inventory stock
     public boolean processCheckout(String bookTitle, int quantity, boolean expressShipping) {
         if (bookTitle == null || quantity <= 0) {
             return false;
         }
-        double total = calculateOrderTotal(bookTitle, quantity);
-
-        for (Book b : inventory) {
-            if (b.getTitle().equals(bookTitle)) {
-                b.setStock(b.getStock() - quantity);
-                break;
-            }
-        }
+        calculateOrderTotal(bookTitle, quantity);
+        Book book = findBook(bookTitle);
+        book.setStock(book.getStock() - quantity);
         return true;
     }
 }

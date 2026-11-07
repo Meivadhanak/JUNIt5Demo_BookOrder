@@ -57,29 +57,80 @@ class BookOrderManagerTest {
 
     @Test
     void testAddNullBookThrowsException() {
-        // TODO (Homework): Implement test to verify that adding a null book throws IllegalArgumentException.
-        // Ensure branch coverage covers null validation in addBookToInventory.
-        fail("Homework pending: implement testAddNullBookThrowsException");
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> manager.addBookToInventory(null));
+        assertEquals("Book cannot be null.", exception.getMessage());
     }
 
     @Test
     void testSetInvalidDiscountRateThrowsException() {
-        // TODO (Homework): Test boundary values for discount rate (< 0.0 and > 1.0)
-        // to reach 99% branch coverage on setDiscountRate.
-        fail("Homework pending: implement testSetInvalidDiscountRateThrowsException");
+        assertAll(
+                () -> assertThrows(IllegalArgumentException.class, () -> manager.setDiscountRate(-0.01)),
+                () -> assertThrows(IllegalArgumentException.class, () -> manager.setDiscountRate(1.01)));
+    }
+
+    @Test
+    void testSetDiscountRateBoundaries() {
+        assertDoesNotThrow(() -> manager.setDiscountRate(0.0));
+        assertDoesNotThrow(() -> manager.setDiscountRate(1.0));
     }
 
     @Test
     void testCalculateOrderTotalInsufficientStock() {
-        // TODO (Homework): Test when requested quantity exceeds available stock,
-        // ensuring IllegalStateException is thrown.
-        fail("Homework pending: implement testCalculateOrderTotalInsufficientStock");
+        IllegalStateException exception = assertThrows(
+                IllegalStateException.class,
+                () -> manager.calculateOrderTotal("Java Programming", 11));
+        assertEquals("Insufficient stock available.", exception.getMessage());
+    }
+
+    @Test
+    void testCalculateOrderTotalRejectsBlankTitle() {
+        assertThrows(IllegalArgumentException.class, () -> manager.calculateOrderTotal("   ", 1));
+    }
+
+    @Test
+    void testCalculateOrderTotalRejectsNonPositiveQuantity() {
+        assertThrows(IllegalArgumentException.class, () -> manager.calculateOrderTotal("Java Programming", 0));
+    }
+
+    @Test
+    void testCalculateOrderTotalBookNotFound() {
+        IllegalStateException exception = assertThrows(
+                IllegalStateException.class,
+                () -> manager.calculateOrderTotal("Unknown Book", 1));
+        assertEquals("Book not found in inventory.", exception.getMessage());
+    }
+
+    @Test
+    void testCalculateOrderTotalFindsBookAfterNonMatchingEntry() {
+        manager.addBookToInventory(new Book("Algorithms", 50.0, 3));
+        assertEquals(100.0, manager.calculateOrderTotal("Algorithms", 2), 0.001);
     }
 
     @Test
     void testProcessCheckoutSuccessAndStockReduction() {
-        // TODO (Homework): Test processCheckout with valid inputs and verify
-        // that the inventory stock is correctly reduced and boolean true is returned.
-        fail("Homework pending: implement testProcessCheckoutSuccessAndStockReduction");
+        Book secondBook = new Book("Algorithms", 50.0, 3);
+        manager.addBookToInventory(secondBook);
+
+        assertTrue(manager.processCheckout("Algorithms", 2, false));
+        assertEquals(10, sampleBook.getStock());
+        assertEquals(1, secondBook.getStock());
+    }
+
+    @Test
+    void testProcessCheckoutReturnsFalseForInvalidInputs() {
+        assertAll(
+                () -> assertFalse(manager.processCheckout(null, 1, false)),
+                () -> assertFalse(manager.processCheckout("Java Programming", 0, false)));
+        assertEquals(10, sampleBook.getStock());
+    }
+
+    @Test
+    void testProcessCheckoutPropagatesOrderValidationFailure() {
+        assertThrows(
+                IllegalStateException.class,
+                () -> manager.processCheckout("Java Programming", 11, true));
+        assertEquals(10, sampleBook.getStock());
     }
 }
